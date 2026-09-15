@@ -1,73 +1,34 @@
-import { Link, Outlet, useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { Outlet, Link } from "react-router-dom";
+import Logo from "../components/Logo";
 
-function AppLayout() {
-  const { isAuthenticated, logout } = useAuth()
-  const navigate = useNavigate()
-
-  function handleLogout() {
-    logout()
-    navigate('/login')
-  }
-
+export default function AppLayout() {
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <nav className="border-b border-slate-800 px-6 py-4">
-        <div className="mx-auto flex max-w-7xl items-center justify-between">
-          <Link to="/" className="text-xl font-bold">
-            DocuMind
+    <div className="min-h-screen w-full bg-bg font-body">
+      <div className="mx-auto max-w-5xl px-6 py-6">
+        <header className="flex items-center justify-between border-b border-border pb-5">
+          <Link to="/" className="flex items-center gap-2.5">
+            <Logo />
+            <span className="font-display text-[17px] font-semibold text-ink">
+              DocuMind
+            </span>
           </Link>
-
-          <div className="flex items-center gap-6 text-sm text-slate-300">
-            <Link
-              to="/"
-              className="hover:text-white"
-            >
+          <nav className="flex items-center gap-7 text-[14.5px] text-[#C7CAD6]">
+            <Link to="/" className="transition-colors hover:text-white">
               Home
             </Link>
+            <Link to="/login" className="transition-colors hover:text-white">
+              Log in
+            </Link>
+            <Link to="/register" className="transition-colors hover:text-white">
+              Register
+            </Link>
+          </nav>
+        </header>
 
-            {isAuthenticated ? (
-              <>
-                <Link
-                  to="/dashboard"
-                  className="hover:text-white"
-                >
-                  Dashboard
-                </Link>
-
-                <button
-                  onClick={handleLogout}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-white hover:bg-red-700"
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <Link
-                  to="/login"
-                  className="hover:text-white"
-                >
-                  Login
-                </Link>
-
-                <Link
-                  to="/register"
-                  className="hover:text-white"
-                >
-                  Register
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </nav>
-
-      <main className="mx-auto max-w-7xl px-6 py-8">
-        <Outlet />
-      </main>
+        <main className="pt-8">
+          <Outlet />
+        </main>
+      </div>
     </div>
-  )
+  );
 }
-
-export default AppLayout

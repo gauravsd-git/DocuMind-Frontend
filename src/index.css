@@ -1,1 +1,35 @@
 @import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap");
+
+/* Design tokens. Tailwind v4 turns each of these into a utility
+   automatically: --color-bg → bg-bg / text-bg / border-bg, etc.
+   Keep NetworkBackground.jsx and Logo.jsx's hardcoded accent hex
+   in sync with --color-accent if you change it here. */
+@theme {
+  --color-bg: #0a0a0e;
+  --color-panel: #0d0c0a;
+  --color-border: #221d1a;
+  --color-ink: #f1f0ec;
+  --color-muted: #948e86;
+  --color-accent: #ff6a45;
+  --color-progress: #34d399;
+
+  --font-display: "Space Grotesk", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+/* Hide the native scrollbar (scrolling still works via wheel/touch/keys) */
+html {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* old Edge/IE */
+}
+html::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, new Edge */
+}
