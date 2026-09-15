@@ -1,77 +1,103 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { register } from '../services/api'
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { register } from "../services/api";
+import NetworkBackground from "../components/NetworkBackground";
+import Reveal from "../components/Reveal";
+import Logo from "../components/Logo";
 
 function Register() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   async function handleSubmit(event) {
-    event.preventDefault()
-    setError('')
-    setLoading(true)
+    event.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
-      await register(email, password)
-      navigate('/login')
+      await register(email, password);
+      navigate("/login");
     } catch (error) {
-      setError(error.message)
+      setError(error.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   return (
-    <div className="mx-auto max-w-md">
-      <h1 className="text-3xl font-bold">Create account</h1>
-      <p className="mt-2 text-slate-400">Join DocuMind</p>
+    <div className="relative min-h-screen bg-bg">
+      <NetworkBackground className="absolute inset-0" />
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3"
-        />
+      <div className="relative z-10 flex min-h-screen flex-col">
+        <div className="px-7 py-5">
+          <Link to="/" className="flex w-fit items-center gap-2">
+            <Logo />
+            <span className="font-display text-sm font-medium text-ink">
+              DocuMind
+            </span>
+          </Link>
+        </div>
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3"
-        />
+        <div className="flex flex-1 items-center justify-center px-6 pb-20">
+          <div className="w-full max-w-md">
+            <Reveal as="h1" className="font-display text-3xl font-semibold text-ink">
+              Create account
+            </Reveal>
+            <Reveal as="p" delay={80} className="mt-2 text-sm text-muted">
+              Join DocuMind
+            </Reveal>
 
-        {error && (
-          <p className="rounded-lg bg-red-500/10 p-3 text-red-400">
-            {error}
-          </p>
-        )}
+            <Reveal delay={140}>
+              <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full rounded-lg border border-border bg-panel px-4 py-3 text-[15px] text-ink outline-none placeholder:text-muted focus:border-accent"
+                />
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold hover:bg-blue-700 disabled:opacity-50"
-        >
-          {loading ? 'Creating account...' : 'Register'}
-        </button>
-      </form>
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full rounded-lg border border-border bg-panel px-4 py-3 text-[15px] text-ink outline-none placeholder:text-muted focus:border-accent"
+                />
 
-      <p className="mt-6 text-center text-slate-400">
-        Already have an account?{' '}
-        <Link to="/login" className="text-blue-400">
-          Login
-        </Link>
-      </p>
+                {error && (
+                  <p className="rounded-lg bg-red-500/10 p-3 text-sm text-red-400">
+                    {error}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-bg transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {loading ? "Creating account..." : "Register"}
+                </button>
+              </form>
+            </Reveal>
+
+            <Reveal delay={200} as="p" className="mt-6 text-center text-sm text-muted">
+              Already have an account?{" "}
+              <Link to="/login" className="text-accent hover:opacity-80">
+                Login
+              </Link>
+            </Reveal>
+          </div>
+        </div>
+      </div>
     </div>
-  )
+  );
 }
 
-export default Register
+export default Register;

@@ -1,90 +1,106 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { login } from '../services/api'
-import { useAuth } from '../context/AuthContext'
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { login } from "../services/api";
+import { useAuth } from "../context/AuthContext";
+import NetworkBackground from "../components/NetworkBackground";
+import Reveal from "../components/Reveal";
+import Logo from "../components/Logo";
 
 function Login() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const { login: saveToken } = useAuth()
-  const navigate = useNavigate()
+  const { login: saveToken } = useAuth();
+  const navigate = useNavigate();
 
   async function handleSubmit(event) {
-    event.preventDefault()
-    setError('')
-    setLoading(true)
+    event.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
-      const data = await login(email, password)
-
-      saveToken(data.token)
-      navigate('/dashboard')
+      const data = await login(email, password);
+      saveToken(data.token);
+      navigate("/dashboard");
     } catch (error) {
-      setError(error.message)
+      setError(error.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   return (
-    <div className="mx-auto max-w-md">
-      <h1 className="text-3xl font-bold">Welcome back</h1>
+    <div className="relative min-h-screen bg-bg">
+      <NetworkBackground className="absolute inset-0" />
 
-      <p className="mt-2 text-slate-400">
-        Login to DocuMind
-      </p>
+      <div className="relative z-10 flex min-h-screen flex-col">
+        <div className="px-7 py-5">
+          <Link to="/" className="flex w-fit items-center gap-2">
+            <Logo />
+            <span className="font-display text-sm font-medium text-ink">
+              DocuMind
+            </span>
+          </Link>
+        </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="mt-8 space-y-5"
-      >
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          required
-          className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none focus:border-blue-500"
-        />
+        <div className="flex flex-1 items-center justify-center px-6 pb-20">
+          <div className="w-full max-w-md">
+            <Reveal as="h1" className="font-display text-3xl font-semibold text-ink">
+              Welcome back
+            </Reveal>
+            <Reveal as="p" delay={80} className="mt-2 text-sm text-muted">
+              Login to DocuMind
+            </Reveal>
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          required
-          className="w-full rounded-lg border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none focus:border-blue-500"
-        />
+            <Reveal delay={140}>
+              <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  required
+                  className="w-full rounded-lg border border-border bg-panel px-4 py-3 text-[15px] text-ink outline-none placeholder:text-muted focus:border-accent"
+                />
 
-        {error && (
-          <p className="rounded-lg bg-red-500/10 p-3 text-red-400">
-            {error}
-          </p>
-        )}
+                <input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                  className="w-full rounded-lg border border-border bg-panel px-4 py-3 text-[15px] text-ink outline-none placeholder:text-muted focus:border-accent"
+                />
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {loading ? 'Logging in...' : 'Login'}
-        </button>
-      </form>
+                {error && (
+                  <p className="rounded-lg bg-red-500/10 p-3 text-sm text-red-400">
+                    {error}
+                  </p>
+                )}
 
-      <p className="mt-6 text-center text-slate-400">
-        Don't have an account?{' '}
-        <Link
-          to="/register"
-          className="text-blue-400 hover:text-blue-300"
-        >
-          Register
-        </Link>
-      </p>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full rounded-lg bg-accent px-4 py-3 text-sm font-semibold text-bg transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {loading ? "Logging in..." : "Login"}
+                </button>
+              </form>
+            </Reveal>
+
+            <Reveal delay={200} as="p" className="mt-6 text-center text-sm text-muted">
+              Don't have an account?{" "}
+              <Link to="/register" className="text-accent hover:opacity-80">
+                Register
+              </Link>
+            </Reveal>
+          </div>
+        </div>
+      </div>
     </div>
-  )
+  );
 }
 
-export default Login
+export default Login;
