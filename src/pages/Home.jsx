@@ -137,7 +137,7 @@ export default function Home() {
                 }`}
               >
                 <div
-                  className={`min-w-[120px] rounded px-4 py-3 text-center text-[13px] font-medium ${
+                  className={`min-w-30 rounded px-4 py-3 text-center text-[13px] font-medium ${
                     stage.final
                       ? "min-w-[150px] bg-accent font-semibold text-bg"
                       : "border border-accent text-ink"
