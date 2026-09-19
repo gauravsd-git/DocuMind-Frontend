@@ -20,3 +20,31 @@
     animation: none;
   }
 }
+
+@keyframes thinking-pulse {
+  0%,
+  80%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.thinking-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-muted);
+  animation: thinking-pulse 1.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thinking-dot {
+    animation: none;
+    opacity: 0.6;
+  }
+}

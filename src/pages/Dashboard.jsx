@@ -1,63 +1,55 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { uploadDocument, queryDocument } from "../services/api";
+import NetworkBackground from "../components/NetworkBackground";
+
+// Assumptions baked into this flow (flag if any of these are wrong):
+// - One active document at a time — uploading a new PDF replaces it,
+//   chat history stays visible either way.
+// - The question input is disabled until a document has uploaded
+//   successfully, rather than allowing a question and erroring.
+// - The input clears immediately on send (not after the answer arrives) —
+//   standard chat-UI pattern, matches Claude/ChatGPT.
 
 function Dashboard() {
-  const [file, setFile] = useState(null);
-  const [uploadMessage, setUploadMessage] = useState("");
-  const [uploadError, setUploadError] = useState("");
+  const [uploadedFileName, setUploadedFileName] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
 
   const [question, setQuestion] = useState("");
-  const [answer, setAnswer] = useState("");
-  const [sources, setSources] = useState([]);
-  const [queryError, setQueryError] = useState("");
+  const [messages, setMessages] = useState([]);
   const [asking, setAsking] = useState(false);
 
-  function handleFileChange(event) {
-    const selectedFile = event.target.files[0];
+  const fileInputRef = useRef(null);
+  const bottomRef = useRef(null);
+  const idRef = useRef(0);
 
-    setUploadMessage("");
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  async function handleFileSelect(event) {
+    const selectedFile = event.target.files[0];
+    event.target.value = ""; // allow re-selecting the same file later
+
     setUploadError("");
 
-    if (!selectedFile) {
-      setFile(null);
-      return;
-    }
+    if (!selectedFile) return;
 
     if (selectedFile.type !== "application/pdf") {
-      setFile(null);
       setUploadError("Only PDF files are allowed.");
       return;
     }
 
     if (selectedFile.size > 10 * 1024 * 1024) {
-      setFile(null);
       setUploadError("File size must be less than 10 MB.");
       return;
     }
 
-    setFile(selectedFile);
-  }
-
-  async function handleUpload(event) {
-    event.preventDefault();
-
-    if (!file) {
-      setUploadError("Please select a PDF file.");
-      return;
-    }
-
     setUploading(true);
-    setUploadError("");
-    setUploadMessage("");
 
     try {
-      const data = await uploadDocument(file);
-
-      setUploadMessage(`Uploaded successfully: ${data.filename}`);
-
-      setFile(null);
-      event.target.reset();
+      const data = await uploadDocument(selectedFile);
+      setUploadedFileName(data.filename);
     } catch (error) {
       setUploadError(error.message);
     } finally {
@@ -65,189 +57,162 @@ function Dashboard() {
     }
   }
 
-  async function handleQuestion(event) {
+  async function handleSend(event) {
     event.preventDefault();
 
-    if (!question.trim()) {
-      setQueryError("Please enter a question.");
-      return;
-    }
+    const trimmed = question.trim();
+    if (!trimmed || !uploadedFileName || asking) return;
 
+    const id = ++idRef.current;
+    setMessages((prev) => [
+      ...prev,
+      { id, question: trimmed, loading: true, answer: null, sources: [], error: "" },
+    ]);
+    setQuestion("");
     setAsking(true);
-    setQueryError("");
-    setAnswer("");
-    setSources([]);
 
     try {
-      const data = await queryDocument(question.trim());
-
-      setAnswer(data.answer);
-      setSources(data.sources || []);
+      const data = await queryDocument(trimmed);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === id
+            ? { ...m, loading: false, answer: data.answer, sources: data.sources || [] }
+            : m
+        )
+      );
     } catch (error) {
-      setQueryError(error.message);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === id ? { ...m, loading: false, error: error.message } : m
+        )
+      );
     } finally {
       setAsking(false);
     }
   }
 
   return (
-    <div className="space-y-10">
-      {/* Header */}
-      <section>
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-accent/20 text-2xl">
-            📄
-          </div>
+    <div className="relative flex h-155 flex-col overflow-hidden rounded-2xl border border-border bg-bg">
+      <NetworkBackground
+        className="absolute inset-0"
+        lineAlpha={0.22}
+        linkDistance={110}
+        maxNodes={150}
+        dotColor="rgba(241, 240, 236, 0.4)"
+      />
 
-          <div>
-            <h1 className="font-display text-4xl font-bold tracking-tight text-ink">
-              Document Dashboard
-            </h1>
-
-            <p className="mt-1 text-muted">
-              Upload documents and ask questions using AI.
-            </p>
-          </div>
+      <div className="relative z-10 flex h-full flex-col">
+        <div className="border-b border-border px-6 py-4 text-sm font-medium text-ink">
+          Ask DocuMind
         </div>
-      </section>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        {/* Upload Card */}
-        <section className="rounded-2xl border border-border bg-panel/80 p-6 shadow-xl">
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-ink">
-              Upload Document
-            </h2>
+        <div className="flex flex-1 flex-col gap-3.5 overflow-y-auto px-6 py-5">
+          {uploadedFileName ? (
+            <div className="mx-auto flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-xs text-muted">
+              <span className="text-progress">✓</span>
+              {uploadedFileName} uploaded
+            </div>
+          ) : (
+            <div className="mx-auto text-xs text-muted">
+              Upload a PDF to get started
+            </div>
+          )}
 
-            <p className="mt-1 text-sm text-muted">
-              Upload a PDF to add it to your knowledge base.
-            </p>
-          </div>
+          {uploadError && (
+            <div className="mx-auto rounded-lg border border-red-900/50 bg-red-950/30 px-3 py-2 text-xs text-red-400">
+              {uploadError}
+            </div>
+          )}
 
-          <form onSubmit={handleUpload} className="space-y-5">
-            <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-bg/70 px-6 py-10 text-center transition hover:border-accent hover:bg-bg">
-              <span className="text-3xl">📄</span>
-
-              <span className="mt-3 font-medium text-ink">
-                Choose a PDF
-              </span>
-
-              <span className="mt-1 text-sm text-muted">
-                Maximum file size: 10 MB
-              </span>
-
-              <input
-                type="file"
-                accept="application/pdf"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-            </label>
-
-            {file && (
-              <div className="rounded-lg border border-border bg-bg p-4">
-                <p className="text-sm text-muted">Selected file</p>
-
-                <p className="mt-1 truncate font-medium text-ink">
-                  {file.name}
-                </p>
+          {messages.map((m) => (
+            <div key={m.id} className="flex flex-col gap-2">
+              <div className="max-w-[75%] self-end rounded-[12px_12px_2px_12px] bg-accent px-3.5 py-2.5 text-[13px] text-bg">
+                {m.question}
               </div>
-            )}
 
-            {uploadError && (
-              <div className="rounded-lg border border-red-900/50 bg-red-950/30 p-4 text-sm text-red-400">
-                {uploadError}
-              </div>
-            )}
+              {m.loading && (
+                <div className="flex items-center gap-1.5 self-start rounded-[2px_12px_12px_12px] border border-border bg-panel px-3.5 py-2.5">
+                  <span className="thinking-dot" style={{ animationDelay: "0s" }} />
+                  <span className="thinking-dot" style={{ animationDelay: "0.2s" }} />
+                  <span className="thinking-dot" style={{ animationDelay: "0.4s" }} />
+                </div>
+              )}
 
-            {uploadMessage && (
-              <div className="rounded-lg border border-progress/30 bg-progress/10 p-4 text-sm text-progress">
-                {uploadMessage}
-              </div>
-            )}
+              {!m.loading && m.error && (
+                <div className="max-w-[80%] self-start rounded-lg border border-red-900/50 bg-red-950/30 px-3.5 py-2.5 text-[13px] text-red-400">
+                  {m.error}
+                </div>
+              )}
 
-            <button
-              type="submit"
-              disabled={!file || uploading}
-              className="w-full rounded-xl bg-accent px-5 py-3 font-semibold text-bg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {uploading ? "Processing document..." : "Upload PDF"}
-            </button>
-          </form>
-        </section>
+              {!m.loading && m.answer && (
+                <div className="max-w-[80%] self-start">
+                  <div className="rounded-[2px_12px_12px_12px] border border-border bg-panel px-3.5 py-3 text-[13px] leading-relaxed text-[#E4E0D8]">
+                    {m.answer}
+                  </div>
+                  {m.sources.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {m.sources.map((source, i) => (
+                        <span
+                          key={`${source.documentId}-${source.chunkIndex}-${i}`}
+                          className="flex items-center gap-1 rounded-full border border-border px-2 py-1 text-[11px] text-muted"
+                        >
+                          {source.filename} · chunk {source.chunkIndex}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
 
-        {/* Q&A Card */}
-        <section className="rounded-2xl border border-border bg-panel/80 p-6 shadow-xl">
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-ink">Ask DocuMind</h2>
+          <div ref={bottomRef} />
+        </div>
 
-            <p className="mt-1 text-sm text-muted">
-              Ask questions about your uploaded documents.
-            </p>
-          </div>
+        <form
+          onSubmit={handleSend}
+          className="flex items-center gap-2.5 border-t border-border px-6 py-3.5"
+        >
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/pdf"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current.click()}
+            disabled={uploading}
+            aria-label="Upload PDF"
+            className="flex h-9 w-9 flex-none items-center justify-center rounded-lg border border-border text-muted transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
+          >
+            {uploading ? "…" : "📎"}
+          </button>
 
-          <form onSubmit={handleQuestion} className="space-y-5">
-            <textarea
-              value={question}
-              onChange={(event) => setQuestion(event.target.value)}
-              placeholder="e.g. What programming language is used in this project?"
-              rows={6}
-              className="w-full resize-none rounded-xl border border-border bg-bg px-4 py-4 text-ink outline-none transition placeholder:text-muted focus:border-accent focus:ring-1 focus:ring-accent"
-            />
+          <input
+            type="text"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder={
+              uploadedFileName
+                ? "Ask a question about your document..."
+                : "Upload a PDF first"
+            }
+            disabled={!uploadedFileName || asking}
+            className="flex-1 rounded-[10px] border border-border bg-panel px-3.5 py-2.5 text-[13px] text-ink outline-none placeholder:text-muted focus:border-accent disabled:opacity-50"
+          />
 
-            {queryError && (
-              <div className="rounded-lg border border-red-900/50 bg-red-950/30 p-4 text-sm text-red-400">
-                {queryError}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={asking}
-              className="w-full rounded-xl bg-accent px-5 py-3 font-semibold text-bg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {asking ? "Thinking..." : "Ask Question"}
-            </button>
-          </form>
-        </section>
+          <button
+            type="submit"
+            disabled={!uploadedFileName || !question.trim() || asking}
+            aria-label="Send"
+            className="flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-accent text-bg transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            ↑
+          </button>
+        </form>
       </div>
-
-      {/* Answer */}
-      {answer && (
-        <section className="rounded-2xl border border-border bg-panel/80 p-6 shadow-xl">
-          <h2 className="text-xl font-semibold text-ink">AI Answer</h2>
-
-          <div className="mt-5 rounded-xl border border-border bg-bg p-5 leading-7 text-ink">
-            {answer}
-          </div>
-        </section>
-      )}
-
-      {/* Sources */}
-      {sources.length > 0 && (
-        <section className="rounded-2xl border border-border bg-panel/80 p-6 shadow-xl">
-          <h2 className="text-xl font-semibold text-ink">Sources</h2>
-
-          <div className="mt-5 grid gap-4 md:grid-cols-2">
-            {sources.map((source, index) => (
-              <div
-                key={`${source.documentId}-${source.chunkIndex}-${index}`}
-                className="rounded-xl border border-border bg-bg p-5"
-              >
-                <p className="font-medium text-ink">{source.filename}</p>
-
-                <p className="mt-2 text-sm text-muted">
-                  Document ID: {source.documentId}
-                </p>
-
-                <p className="text-sm text-muted">
-                  Chunk: {source.chunkIndex}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
     </div>
   );
 }
