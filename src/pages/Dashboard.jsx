@@ -92,14 +92,8 @@ function Dashboard() {
   }
 
   return (
-    <div className="relative flex h-155 flex-col overflow-hidden rounded-2xl border border-border bg-bg">
-      <NetworkBackground
-        className="absolute inset-0"
-        lineAlpha={0.22}
-        linkDistance={110}
-        maxNodes={150}
-        dotColor="rgba(241, 240, 236, 0.4)"
-      />
+    <div className="relative flex h-[620px] flex-col overflow-hidden rounded-2xl border border-border bg-bg">
+      <NetworkBackground className="absolute inset-0" maxNodes={150} />
 
       <div className="relative z-10 flex h-full flex-col">
         <div className="border-b border-border px-6 py-4 text-sm font-medium text-ink">

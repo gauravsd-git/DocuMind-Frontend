@@ -1,12 +1,19 @@
 import { useEffect, useRef } from "react";
 
+/**
+ * Canvas node-network animation that sizes itself to whatever positioned
+ * wrapper it's placed in (via ResizeObserver on the canvas element, which
+ * tracks its own layout box). Render it inside a `relative` parent with
+ * `<NetworkBackground className="absolute inset-0" />` and stack real
+ * content in a sibling `relative z-10` wrapper on top.
+ */
 export default function NetworkBackground({
   className = "",
   density = 1 / 6700,
-  linkDistance = 100,
-  dotColor = "rgba(241, 240, 236, 0.35)",
+  linkDistance = 110,
+  dotColor = "rgba(241, 240, 236, 0.4)",
   lineColorRgb = "255, 106, 69",
-  lineAlpha = 0.09,
+  lineAlpha = 0.22,
   maxNodes = 260,
 }) {
   const canvasRef = useRef(null);
